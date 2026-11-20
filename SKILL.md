@@ -2,7 +2,7 @@
 name: bmscriptsbox-dev
 slug: bmscriptsbox-dev
 displayName: 不忙脚本盒子脚本开发
-version: 1.6.0
+version: 1.6.1
 license: MIT
 description: 不忙脚本盒子脚本开发：调用本技能即可把需求写成脚本（Python / Node.js / PowerShell / BAT / AutoHotkey / HTML / EXE 七种形态），产出文件装进盒子直接运行，免配环境、免装依赖、免编译，非技术用户也能上手；开发、修改、调试或排查运行报错时使用。
 ---
@@ -21,7 +21,7 @@ description: 不忙脚本盒子脚本开发：调用本技能即可把需求写�
 
 ---
 
-skill 版本 1.6.0 ｜ 对应盒子文档 docVersion 0.3.0
+skill 版本 1.6.1 ｜ 对应盒子文档 docVersion 0.3.0
 
 文档入口：<https://raw.githubusercontent.com/bm-qihengzhi/BmScriptsBox/main/llms.txt>
 纯 markdown 的分组索引（35 页，每页一句话说明用途），链接直指 `.md` 源文件。
@@ -307,34 +307,24 @@ dependencies = []
 
 ## 6. 十六条硬规则
 
-1. **JSON 是 `argv[1]`**，Node 是 `argv[2]`；读写一律 `utf-8`。写错就一个字段都读不到。
-2. **`inputs` 最多 1 条**。多文件用 `str` 类型的 `params`，分号分隔。
-3. **`data` 的值恒为字符串数组**：`list` 是多元素，`str` 是单元素数组 `["文本"]`。别当标量用。
-4. **`language_version` 必须与 `pyproject.toml` 的 `requires-python` 逐字相同**——盒子做字符串全等比对，
-   `>=3.11` vs `>=3.11.0` 都会报「环境定义冲突」。改一处必须改两处。
-5. **`language_version` 必须写全 `major.minor`**——盒子按次版本锁定，只写 `>=3` 会「云端锁定失败」。
-   且 `>=3.10` 不会用机器上更新的 Python，它锁 3.10.x。详见 `references/pitfalls.md`。
-6. **`params_form` 脚本的 `terminal` 一律 `"always"`**，否则启动窗口可能被隐藏。
-7. **节点必须配 ≥1 个 `[[outputs]]`**，否则安装校验失败；`node.enabled` 不为真时 `/api/link` 直接 403。
-8. **节点脚本的分流发生在创建窗口之前**，且**业务失败也 `exit 0`**——非零退出会让盒子合成错误信封，
-   盖掉你写的 `msg`。只有信封写不进去才 `exit 1`。
-9. **模型只在 TOML 声明，不在脚本里下载**。接口只给文件夹路径，具体文件名要按声明时的相对路径自己拼。
-10. **配置里的路径一律相对**（`entry`、`icon`），绝对路径会被校验拒绝。
-11. **改完 TOML 必须重新安装/更新脚本**——`is_node` 是数据库列，只在安装/更新时写入；界面声明同理。
-12. **用了 `multiprocessing` 必须有 `if __name__ == "__main__"` + `freeze_support()`**——
-    Windows spawn 会重新 import `__main__`，没守卫就重跑主逻辑。
-13. **`label` 决定界面上显示什么，`description` 不进界面**。每条 `inputs` / `params` 都必须写 `label`，
-    否则用户看到的是 `target_paths`、`quality` 这种英文参数名；`choices` 想显示中文还要配 `choice_labels`。
-14. **manual 模式下终端可见时，脚本必须自己收尾**：批量任务结束用 5 秒倒计时（任意键跳过），
-    无参引导用暂停等按键。不处理的话 cmd 窗口会一直挂着等用户手动关。
-    **脚本同时声明了 `node` 时，node 分支里直接 `exit 0`，不要走倒计时**——那会卡住调用方。
-    `scheduled` 同理不等待。
-    实现与 `flush=True` 的坑见 `references/pitfalls.md` 第 8 节。
-15. **弱交互先用 `params_form`，不要急着写 GUI 或 HTML**。单界面、填完即跑的场景去写自己画窗口或整页 HTML，
-    属于过度设计——样式要自己维护、和盒子主题对不上、体积还大。只有实时预览、多步向导、运行中还要交互才升级。
-16. **有终端就把输出排好版，没终端就发通知**。`terminal = "never"` 时用户看不到任何 `print`，
-    必须用 `/api/notify` 发气泡，否则跑完用户完全不知道结果；有终端时一行一件事、带 ✅/❌、结尾给汇总。
-    详见 `references/pitfalls.md` 第 9 节。
+| # | 规则 | 不这么做会怎样 |
+| --- | --- | --- |
+| 1 | JSON 在 `argv[1]`，Node 在 `argv[2]`，编码一律 UTF-8 | 一个字段都读不到 |
+| 2 | `inputs` 最多 1 条，多文件用 `params` 的 `str` | 安装校验失败 |
+| 3 | `data` 的值恒为字符串数组 | 当标量用，取到错类型 |
+| 4 | `language_version` 与 `pyproject.toml` 的 `requires-python` **逐字相同** | 报「环境定义冲突」，改一处必须改两处 |
+| 5 | `language_version` 写全 `major.minor`，如 `>=3.12` | 只写 `>=3` 会「云端锁定失败」；`>=3.10` 锁 3.10.x，不用机器上新版本（见 pitfalls） |
+| 6 | `params_form` 脚本的 `terminal` 一律 `"always"` | 启动窗口被隐藏 |
+| 7 | 节点必须配 ≥1 个 `[[outputs]]` | 安装校验失败；`/api/link` 直接 403 |
+| 8 | 节点分流在建窗口**之前**；业务失败也 `exit 0` | 非零退出会让盒子合成错误信封、盖掉你的 `msg`；先建窗会卡住调用方 |
+| 9 | 模型只在 TOML 声明，运行时向 `api_base` 要路径 | 脚本里下载会散落各处、打包变大、多脚本各囤一份 |
+| 10 | `entry` / `icon` 用相对路径 | 绝对路径被校验拒绝 |
+| 11 | 改完 TOML 必须重新安装 / 更新 | `is_node` 等是数据库列，不重装不生效 |
+| 12 | 用了 `multiprocessing` 必须有 `__main__` 守卫 + `freeze_support()` | Windows spawn 会重新 import 主模块，重跑一遍逻辑 |
+| 13 | 每条 `inputs` / `params` 都写 `label` | 界面露出 `target_paths` 这类英文参数名；`choices` 要中文还得配 `choice_labels` |
+| 14 | manual 且有终端要自己收尾：批量倒计时、无参暂停 | cmd 窗口一直挂着；**node 分支里倒计时会卡住调用方**（node 直接 `exit 0`） |
+| 15 | 弱交互先 `params_form`，不要急着画界面 | 样式自己维护、和盒子主题对不上、体积变大 |
+| 16 | 有终端排好版（✅/❌ + 汇总），无终端发 `/api/notify` | 静默脚本跑完，用户完全不知道结果 |
 
 ---
 
