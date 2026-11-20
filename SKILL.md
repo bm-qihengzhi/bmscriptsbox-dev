@@ -2,7 +2,7 @@
 name: bmscriptsbox-dev
 slug: bmscriptsbox-dev
 displayName: 不忙脚本盒子脚本开发
-version: 1.0.0
+version: 1.1.0
 license: MIT
 description: 不忙脚本盒子脚本开发：调用本技能即可把需求写成脚本（Python / Node.js / PowerShell / BAT / AutoHotkey / HTML / EXE 七种形态），产出文件装进盒子直接运行，免配环境、免装依赖、免编译，非技术用户也能上手；开发、修改、调试或排查运行报错时使用。
 ---
@@ -21,7 +21,7 @@ description: 不忙脚本盒子脚本开发：调用本技能即可把需求写�
 
 ---
 
-skill 版本 1.0.0 ｜ 对应盒子文档 docVersion 0.3.0
+skill 版本 1.1.0 ｜ 对应盒子文档 docVersion 0.3.0
 
 文档入口：<https://raw.githubusercontent.com/bm-qihengzhi/BmScriptsBox/main/llms.txt>
 纯 markdown 的分组索引（35 页，每页一句话说明用途），链接直指 `.md` 源文件。
@@ -102,7 +102,7 @@ file-classifier/                 # 目录名：英文小写 + 连字符
 ├── bm-scripts-box-rc.toml       # 必需 —— 盒子靠它认识脚本
 ├── main.py                      # 必需 —— 入口，读 argv[1]
 ├── pyproject.toml               # 必需（Python）—— 依赖与 Python 版本
-├── README.md                    # 推荐 —— 面向用户，含 GIF 演示（发布到社区时）
+├── README.md                    # 推荐 —— 五段结构，见下（发布到社区时）
 ├── icon/logo.png                # 可选 —— TOML 里写 icon/logo.png
 └── imgs/demo.gif                # 可选 —— README 里引用的演示图
 ```
@@ -163,6 +163,26 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+### `README.md`（五段固定，面向普通用户）
+
+```markdown
+# 脚本名称
+
+> 一句话简介：做什么、有什么能力
+
+## 核心特性    3-5 条加粗要点，写用户能感知的收益
+## 脚本演示    ![脚本名演示](./imgs/demo.gif "脚本名演示")
+## 安装方法    盒子 → 脚本市场 → 搜索脚本名 → 安装
+## 使用方式    按实际声明的触发器分小节（卡片 / 右键 / 快捷键 / 定时）
+```
+
+- **缺段或改段名都算不合格**：「用法」「功能一览」不是模板段名，用户是靠段名扫读的
+- **不写内部机制**：参数名、JSON 结构、`argv`、terminal 模式属于 TOML 和代码，不写进 README
+- 没有 GIF 就占位引用，并提醒作者补录
+- 有 `params` 加「### 参数说明」表格；声明了 `node` 才加「## 节点脚本(开发者阅读)」
+
+完整模板、段名规则、GIF 要求见 `references/readme-desc.md`。
 
 ### `pyproject.toml`（Python 必需；Node.js 则用 `package.json`，无依赖也要提供）
 
@@ -261,6 +281,7 @@ dependencies = []
 3. **不得编造 `[bmscriptsbox.xxx]` 段或字段**。文档里没有的，说「文档未收录」，不要发明一个看起来合理的
 4. **不得把「我没查到」说成「盒子不支持」**——前者是检索结果，后者是能力结论
 5. **不得把未执行的验证说成已验证**。只读了代码就说「静态检查通过」，实际跑过才说「运行验证通过」
+6. **不得自创 README 段名或漏段**，也不得把参数名、JSON 结构、代码变量写进 README——那是给普通用户看的
 
 ### 宣布结论前自检三条
 
@@ -282,6 +303,8 @@ dependencies = []
 - [ ] 需要被调用 → 声明了 `node` + `outputs`，并在建窗口前分流
 - [ ] 声明了 `params_form` → `terminal = "always"`
 - [ ] 需要模型 → `models` 段已写，脚本里没有下载逻辑
+- [ ] README 五段齐全（简介 / 核心特性 / 演示 GIF / 安装方法 / 使用方式），段名用模板的
+- [ ] README 里没有内部机制（参数名、JSON 结构、代码变量）；`imgs/demo.gif` 已放或已占位
 - [ ] ZIP 根目录直接含 `bm-scripts-box-rc.toml`，没有多套一层文件夹
 - [ ] 解包到临时目录跑过一次（`terminal="never"` 的节点用子进程自测，见 `references/nodes.md`）
 
