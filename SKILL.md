@@ -2,7 +2,7 @@
 name: bmscriptsbox-dev
 slug: bmscriptsbox-dev
 displayName: 不忙脚本盒子脚本开发
-version: 1.2.0
+version: 1.2.1
 license: MIT
 description: 不忙脚本盒子脚本开发：调用本技能即可把需求写成脚本（Python / Node.js / PowerShell / BAT / AutoHotkey / HTML / EXE 七种形态），产出文件装进盒子直接运行，免配环境、免装依赖、免编译，非技术用户也能上手；开发、修改、调试或排查运行报错时使用。
 ---
@@ -21,7 +21,7 @@ description: 不忙脚本盒子脚本开发：调用本技能即可把需求写�
 
 ---
 
-skill 版本 1.2.0 ｜ 对应盒子文档 docVersion 0.3.0
+skill 版本 1.2.1 ｜ 对应盒子文档 docVersion 0.3.0
 
 文档入口：<https://raw.githubusercontent.com/bm-qihengzhi/BmScriptsBox/main/llms.txt>
 纯 markdown 的分组索引（35 页，每页一句话说明用途），链接直指 `.md` 源文件。
@@ -127,14 +127,16 @@ terminal = "always"            # 建议始终显式填写
 
 [[bmscriptsbox.inputs]]        # 最多 1 条
 name = "target_paths"
+label = "要处理的文件"          # 界面上显示的名字；不写就露出 target_paths
 type = "list"                  # list | str
 pick = "files"                 # files | folders | both
 
 [[bmscriptsbox.params]]        # 运行参数，可多条
 name = "quality"
+label = "压缩质量"              # 界面上显示的名字
 type = "int"                   # str|int|float|bool|list|dict
 default = 80
-description = "输出质量（1-100）"
+description = "取值 1-100"      # 给开发者和调用方看，不进界面
 ```
 
 其余段（triggers / node / outputs / models / dependencies / schedule / params_form / binaries）
@@ -252,7 +254,7 @@ dependencies = []
 
 ---
 
-## 6. 十二条硬规则
+## 6. 十三条硬规则
 
 1. **JSON 是 `argv[1]`**，Node 是 `argv[2]`；读写一律 `utf-8`。写错就一个字段都读不到。
 2. **`inputs` 最多 1 条**。多文件用 `str` 类型的 `params`，分号分隔。
@@ -270,6 +272,8 @@ dependencies = []
 11. **改完 TOML 必须重新安装/更新脚本**——`is_node` 是数据库列，只在安装/更新时写入；界面声明同理。
 12. **用了 `multiprocessing` 必须有 `if __name__ == "__main__"` + `freeze_support()`**——
     Windows spawn 会重新 import `__main__`，没守卫就重跑主逻辑。
+13. **`label` 决定界面上显示什么，`description` 不进界面**。每条 `inputs` / `params` 都必须写 `label`，
+    否则用户看到的是 `target_paths`、`quality` 这种英文参数名；`choices` 想显示中文还要配 `choice_labels`。
 
 ---
 
@@ -300,6 +304,7 @@ dependencies = []
 - [ ] `language_version` 与 `pyproject.toml` / `package.json` 一致且写全 `major.minor`
 - [ ] `entry` / `icon` 是相对路径，扩展名与 `language` 匹配
 - [ ] 入口脚本能读 `argv[1]`，`params` 全部用 `.get(默认值)` 兜底
+- [ ] 每个 `inputs` / `params` 都写了 `label`（界面显示名），不是只有 `description`
 - [ ] `inputs` 不超过 1 条
 - [ ] 需要被调用 → 声明了 `node` + `outputs`，并在建窗口前分流
 - [ ] 声明了 `params_form` → `terminal = "always"`
