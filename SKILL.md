@@ -2,7 +2,7 @@
 name: bmscriptsbox-dev
 slug: bmscriptsbox-dev
 displayName: 不忙脚本盒子脚本开发
-version: 1.4.0
+version: 1.5.0
 license: MIT
 description: 不忙脚本盒子脚本开发：调用本技能即可把需求写成脚本（Python / Node.js / PowerShell / BAT / AutoHotkey / HTML / EXE 七种形态），产出文件装进盒子直接运行，免配环境、免装依赖、免编译，非技术用户也能上手；开发、修改、调试或排查运行报错时使用。
 ---
@@ -21,7 +21,7 @@ description: 不忙脚本盒子脚本开发：调用本技能即可把需求写�
 
 ---
 
-skill 版本 1.4.0 ｜ 对应盒子文档 docVersion 0.3.0
+skill 版本 1.5.0 ｜ 对应盒子文档 docVersion 0.3.0
 
 文档入口：<https://raw.githubusercontent.com/bm-qihengzhi/BmScriptsBox/main/llms.txt>
 纯 markdown 的分组索引（35 页，每页一句话说明用途），链接直指 `.md` 源文件。
@@ -284,11 +284,18 @@ dependencies = []
 
 自己写 GUI 或 HTML 的代价：样式自己维护、和盒子主题对不上、体积变大、改一次布局就要重调。
 
+**一旦确定要用 HTML 做界面，首选「开发语言起本地 HTTP 服务 + webview-cli 加载 URL」**：
+
+- 不要用 stdin 注入整页 HTML——WebView2 有约 2MB 上限，图片要 base64 内联会膨胀 37%
+- 页面和数据分离，图片按 URL 按需加载，调试也方便
+- **窗口关了服务必须停**：`serve_forever` 跑在 daemon 线程，`finally` 里 `shutdown()` + `server_close()`；用户点 X 关窗时退出码是 2，同样走 finally
+- UI 要极简：一屏一件事、主操作首屏可见、中文标签、明确的默认值。动画和花哨样式不是加分项
+
 | 交互强度 | 方案 |
 | --- | --- |
 | 无交互 | 不声明界面相关段 |
 | **弱交互（单界面、填完即跑）—— 默认** | TOML 加 `[bmscriptsbox.params_form]` 并设 `enabled = true`，配合 `terminal = "always"`；边界见 `references/pitfalls.md` |
-| 强交互（画布标注、多步向导、实时进度） | 自建窗口，webview-cli + 本地 HTTP 服务 → `references/webview-ui.md` |
+| 强交互（画布标注、多步向导、实时进度） | **本地 HTTP 服务 + webview-cli 加载 URL**（首选，见下）→ `references/webview-ui.md` |
 | 双段式（配置窗口 → 执行窗口） | `config.html` 经 stdin 注入，**必须纯内联、零外部依赖**，套 Vercel 极简风 → `references/ui-style.md` |
 
 ### 选模型
@@ -358,6 +365,7 @@ dependencies = []
 - [ ] 每个 `inputs` / `params` 都写了 `label`（界面显示名），不是只有 `description`
 - [ ] `terminal` 为 `always` / `auto` 的脚本，结束前有倒计时或暂停退出（`node` / `scheduled` 不等待）
 - [ ] 弱交互场景用的是 `params_form`，没有为了一个表单去写自绘窗口或 HTML
+- [ ] 用 HTML 做界面时是「本地 HTTP 服务 + webview-cli」，不是 stdin 注入整页；窗口关闭后服务已 `shutdown()`
 - [ ] `inputs` 不超过 1 条
 - [ ] 需要被调用 → 声明了 `node` + `outputs`，并在建窗口前分流
 - [ ] 声明了 `params_form` → `terminal = "always"`
