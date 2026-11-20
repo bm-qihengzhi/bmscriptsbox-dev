@@ -2,7 +2,7 @@
 name: bmscriptsbox-dev
 slug: bmscriptsbox-dev
 displayName: 不忙脚本盒子脚本开发
-version: 1.1.0
+version: 1.2.0
 license: MIT
 description: 不忙脚本盒子脚本开发：调用本技能即可把需求写成脚本（Python / Node.js / PowerShell / BAT / AutoHotkey / HTML / EXE 七种形态），产出文件装进盒子直接运行，免配环境、免装依赖、免编译，非技术用户也能上手；开发、修改、调试或排查运行报错时使用。
 ---
@@ -21,7 +21,7 @@ description: 不忙脚本盒子脚本开发：调用本技能即可把需求写�
 
 ---
 
-skill 版本 1.1.0 ｜ 对应盒子文档 docVersion 0.3.0
+skill 版本 1.2.0 ｜ 对应盒子文档 docVersion 0.3.0
 
 文档入口：<https://raw.githubusercontent.com/bm-qihengzhi/BmScriptsBox/main/llms.txt>
 纯 markdown 的分组索引（35 页，每页一句话说明用途），链接直指 `.md` 源文件。
@@ -243,6 +243,7 @@ dependencies = []
 | 无交互 | 不声明界面相关段 |
 | 弱交互（单界面、填完即跑） | TOML 加 `[bmscriptsbox.params_form]\nenabled = true`，配合 `terminal = "always"`；边界见 `references/pitfalls.md` |
 | 强交互（画布标注、多步向导、实时进度） | 自建窗口，webview-cli + 本地 HTTP 服务 → `references/webview-ui.md` |
+| 双段式（配置窗口 → 执行窗口） | `config.html` 经 stdin 注入，**必须纯内联、零外部依赖**，套 Vercel 极简风 → `references/ui-style.md` |
 
 ### 选模型
 
@@ -303,6 +304,7 @@ dependencies = []
 - [ ] 需要被调用 → 声明了 `node` + `outputs`，并在建窗口前分流
 - [ ] 声明了 `params_form` → `terminal = "always"`
 - [ ] 需要模型 → `models` 段已写，脚本里没有下载逻辑
+- [ ] 双段式脚本的 `config.html`：纯内联样式、无 `<style>`/`<link>`/CDN，套用 Vercel 色板与三层阴影卡片
 - [ ] README 五段齐全（简介 / 核心特性 / 演示 GIF / 安装方法 / 使用方式），段名用模板的
 - [ ] README 里没有内部机制（参数名、JSON 结构、代码变量）；`imgs/demo.gif` 已放或已占位
 - [ ] ZIP 根目录直接含 `bm-scripts-box-rc.toml`，没有多套一层文件夹
@@ -332,6 +334,7 @@ dependencies = []
 | --- | --- | --- |
 | 节点、信封、`/api/link`、七个坑、节点自测 | `node/` `script-linking/` | `references/nodes.md` |
 | 自建窗口（webview-cli + 本地 HTTP）、resolve/reject、FreeConsole 坑 | `auto-generated-ui/` | `references/webview-ui.md` |
+| 配置窗口 UI 标准：Vercel 色板、三层阴影卡片、内联骨架、Enter/Esc、双模式文案 | — | `references/ui-style.md` |
 | 跑 ONNX / 本地模型：模型站探测、预处理、内存调优、中文路径 | `model-download/` | `references/onnx-cpu-scripts.md` |
 | 安装/运行踩过的坑：Python 档位、wheel 矩阵、校验错误全表、打包层级 | — | `references/pitfalls.md` |
 | README 结构、GIF 占位、`info.desc` 的 SEO 写法 | `publish-community/` | `references/readme-desc.md` |
