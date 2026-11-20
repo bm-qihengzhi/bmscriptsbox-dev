@@ -1,5 +1,7 @@
 ---
 name: bmscriptsbox-dev
+slug: bmscriptsbox-dev
+displayName: 不忙脚本盒子脚本开发
 version: 1.0.0
 license: MIT
 description: 不忙脚本盒子脚本开发：调用本技能即可把需求写成脚本（Python / Node.js / PowerShell / BAT / AutoHotkey / HTML / EXE 七种形态），产出文件装进盒子直接运行，免配环境、免装依赖、免编译，非技术用户也能上手；开发、修改、调试或排查运行报错时使用。
