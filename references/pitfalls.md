@@ -136,3 +136,62 @@ hello-box.zip
 3. **`choices` 是英文 key** → 下拉里显示 `auto / zh / en`。要显示中文必须配 `choice_labels = { auto = "自动", zh = "中文" }`——只影响显示，回传给脚本的仍是英文 key
 
 `label` 留空时回退显示 `name`，所以"没写"和"写错"在界面上长得一样，很容易漏到用户手里才发现。
+
+---
+
+## 8. 终端窗口的退出：manual 模式必须自己收尾
+
+**不处理的后果**：`terminal = "always"` 或 `"auto"` 的脚本跑完后，cmd 窗口一直挂着，用户得手动关。
+
+三种 `invoke_mode` 三套退出策略：
+
+| invoke_mode | 终端 | 退出方式 |
+| --- | --- | --- |
+| `node` | 无 | 不等待，写完信封 `exit 0`（见 `nodes.md`） |
+| `scheduled` | 通常 `never` | 不等待。**倒计时会卡住定时任务** |
+| `manual` | `always` / `auto` | 批量结束 → **5 秒倒计时**（任意键跳过）；无参引导 → **暂停等按键** |
+
+### 倒计时退出（批量任务结束）
+
+```python
+def countdown_exit(seconds: int = 5) -> None:
+    """5 秒进度条后退出；按任意键立即退出。"""
+    width = 10
+    try:                          # 非 Windows 兜底
+        import msvcrt
+        has_key = True
+    except ImportError:
+        has_key = False
+
+    for i in range(seconds, 0, -1):
+        if has_key and msvcrt.kbhit():
+            break
+        filled = round(width * (seconds - i + 1) / seconds)
+        bar = "█" * filled + "░" * (width - filled)
+        # flush=True 必须：CONOUT$ 下是块缓冲，不 flush 会攒到进程退出才显示
+        print(f"\r  {i}s {bar}  按任意键立即退出", end="", flush=True)
+        time.sleep(1)
+    print("\r" + " " * 60 + "\r  已退出", flush=True)
+    sys.exit(0)
+```
+
+### 暂停退出（无参引导）
+
+用户还没开始任务（例如点卡片后提示「请先选中文件」），**不要倒计时**——任务没跑，倒计时显得突兀。
+
+```python
+def pause_exit(message: str = "按任意键退出") -> None:
+    try:
+        import msvcrt
+        print(f"\n  {message}...", end="", flush=True)
+        msvcrt.getch()
+    except ImportError:            # 非 Windows 退化为 input()
+        input(f"\n  {message}...")
+    print("  已退出")
+    sys.exit(0)
+```
+
+### 两个必踩的坑
+
+1. **必须 `flush=True`**。`_ensure_console` 重定向到 `CONOUT$` 后输出不是 tty，块缓冲下 `end=""` 的内容会积压到进程退出才一次性冲出来——现象就是「倒计时根本没显示，窗口直接关了」。
+2. **按键监听要用 `msvcrt`**，不能用 `input()`。`\r` 进度条刷新模式下 `input()` 无法逐秒监听，「按任意键立即退出」会失效。
