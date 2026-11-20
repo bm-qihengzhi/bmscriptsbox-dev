@@ -195,3 +195,70 @@ def pause_exit(message: str = "按任意键退出") -> None:
 
 1. **必须 `flush=True`**。`_ensure_console` 重定向到 `CONOUT$` 后输出不是 tty，块缓冲下 `end=""` 的内容会积压到进程退出才一次性冲出来——现象就是「倒计时根本没显示，窗口直接关了」。
 2. **按键监听要用 `msvcrt`**，不能用 `input()`。`\r` 进度条刷新模式下 `input()` 无法逐秒监听，「按任意键立即退出」会失效。
+
+---
+
+## 9. 结果怎么让用户看见：终端排版 / 通知气泡
+
+| terminal | 用户在哪看结果 | 做法 |
+| --- | --- | --- |
+| `always` / `auto` | 终端窗口 | 打印进度 + 结尾汇总，见下 |
+| `never` | **看不到任何输出** | 必须调 `/api/notify` 发气泡 |
+| `never` + 节点 | 调用方 | 只写信封，**不发通知**（会打扰对方） |
+
+### 有终端：把输出排好版
+
+四条：
+
+1. **一行一件事**，不要把多个文件的信息挤成一行
+2. **用符号标结果**：`✅` 成功 / `❌` 失败 / `⚠` 跳过，比纯文字快
+3. **进度带计数**：`[3/12]` 比连成一串的日志好读
+4. **结尾必须汇总**：成功几个、失败几个、耗时多少
+
+```plaintext
+  批量压缩 · 12 个文件
+  ────────────────────────────────
+  [ 1/12] ✅ a.jpg    1.2MB → 340KB
+  [ 2/12] ✅ b.png    980KB → 210KB
+  [ 3/12] ❌ c.gif    不是静态图，已跳过
+  ────────────────────────────────
+  完成：成功 10 个，失败 2 个，耗时 8.4s
+```
+
+失败行要写**原因**，不能只打 ❌。用户拿着「失败」两个字没法排查。
+
+### 没终端：用通知 API
+
+`terminal = "never"` 时 `print` 是黑洞（用户看不到），跑完必须发气泡：
+
+```python
+import json
+from urllib.request import Request, urlopen
+
+
+def notify(api_base: str, message: str, ok: bool = True) -> None:
+    """发一条桌面气泡。失败静默，不影响主流程。"""
+    body = json.dumps({
+        "notify_type": "success" if ok else "error",
+        "message": message,
+    }).encode("utf-8")
+    req = Request(f"{api_base}/api/notify", data=body,
+                  headers={"Content-Type": "application/json"})
+    try:
+        urlopen(req, timeout=5).read()
+    except Exception:
+        pass
+```
+
+调用：
+
+```python
+notify(env["api_base"], f"已压缩 {ok_count} 个文件，失败 {fail_count} 个", ok=fail_count == 0)
+```
+
+要点：
+
+- 用标准库 `urllib`，不额外依赖 `requests`
+- **通知失败不能影响主流程**，所以 `except` 后 `pass`
+- 消息里要带**数量和结果**，不要只写「完成」——气泡一闪而过，用户看不到细节
+- 节点模式不要发通知：调用方会自己处理结果，多一个气泡是噪音

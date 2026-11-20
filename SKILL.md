@@ -2,7 +2,7 @@
 name: bmscriptsbox-dev
 slug: bmscriptsbox-dev
 displayName: 不忙脚本盒子脚本开发
-version: 1.5.0
+version: 1.6.0
 license: MIT
 description: 不忙脚本盒子脚本开发：调用本技能即可把需求写成脚本（Python / Node.js / PowerShell / BAT / AutoHotkey / HTML / EXE 七种形态），产出文件装进盒子直接运行，免配环境、免装依赖、免编译，非技术用户也能上手；开发、修改、调试或排查运行报错时使用。
 ---
@@ -21,7 +21,7 @@ description: 不忙脚本盒子脚本开发：调用本技能即可把需求写�
 
 ---
 
-skill 版本 1.5.0 ｜ 对应盒子文档 docVersion 0.3.0
+skill 版本 1.6.0 ｜ 对应盒子文档 docVersion 0.3.0
 
 文档入口：<https://raw.githubusercontent.com/bm-qihengzhi/BmScriptsBox/main/llms.txt>
 纯 markdown 的分组索引（35 页，每页一句话说明用途），链接直指 `.md` 源文件。
@@ -305,7 +305,7 @@ dependencies = []
 
 ---
 
-## 6. 十五条硬规则
+## 6. 十六条硬规则
 
 1. **JSON 是 `argv[1]`**，Node 是 `argv[2]`；读写一律 `utf-8`。写错就一个字段都读不到。
 2. **`inputs` 最多 1 条**。多文件用 `str` 类型的 `params`，分号分隔。
@@ -332,6 +332,9 @@ dependencies = []
     实现与 `flush=True` 的坑见 `references/pitfalls.md` 第 8 节。
 15. **弱交互先用 `params_form`，不要急着写 GUI 或 HTML**。单界面、填完即跑的场景去写自己画窗口或整页 HTML，
     属于过度设计——样式要自己维护、和盒子主题对不上、体积还大。只有实时预览、多步向导、运行中还要交互才升级。
+16. **有终端就把输出排好版，没终端就发通知**。`terminal = "never"` 时用户看不到任何 `print`，
+    必须用 `/api/notify` 发气泡，否则跑完用户完全不知道结果；有终端时一行一件事、带 ✅/❌、结尾给汇总。
+    详见 `references/pitfalls.md` 第 9 节。
 
 ---
 
@@ -366,6 +369,7 @@ dependencies = []
 - [ ] `terminal` 为 `always` / `auto` 的脚本，结束前有倒计时或暂停退出（`node` / `scheduled` 不等待）
 - [ ] 弱交互场景用的是 `params_form`，没有为了一个表单去写自绘窗口或 HTML
 - [ ] 用 HTML 做界面时是「本地 HTTP 服务 + webview-cli」，不是 stdin 注入整页；窗口关闭后服务已 `shutdown()`
+- [ ] `terminal = "never"` 的脚本有 `/api/notify` 气泡；有终端的脚本结尾有汇总行
 - [ ] `inputs` 不超过 1 条
 - [ ] 需要被调用 → 声明了 `node` + `outputs`，并在建窗口前分流
 - [ ] 声明了 `params_form` → `terminal = "always"`
