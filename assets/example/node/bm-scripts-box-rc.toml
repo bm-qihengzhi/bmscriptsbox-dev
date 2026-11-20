@@ -1,0 +1,44 @@
+[bmscriptsbox]
+
+[bmscriptsbox.info]
+id = "7c1d9e05-4a83-42f6-9b1d-6e2f8a3c5d90"
+name = "文本统计"
+desc = "统计文本文件 | 字符数/行数/预览 | 可被其他脚本调用"
+version = "1.0.0"
+
+[bmscriptsbox.runtime]
+language = "python"
+language_version = ">=3.12"
+entry = "main.py"
+terminal = "never"
+
+[[bmscriptsbox.inputs]]
+name = "target_paths"
+type = "list"
+pick = "files"
+exts = [".txt", ".md", ".log"]
+label = "文本文件"
+
+# 声明为节点：允许被其他脚本通过 /api/link 调用
+[bmscriptsbox.node]
+enabled = true
+
+[[bmscriptsbox.outputs]]
+name = "chars"
+type = "int"
+description = "字符数"
+
+[[bmscriptsbox.outputs]]
+name = "lines"
+type = "int"
+description = "行数"
+
+[[bmscriptsbox.outputs]]
+name = "preview"
+type = "str"
+description = "前 80 字预览"
+
+[bmscriptsbox.triggers.context_menu]
+enabled = true
+targets = ["files"]
+filters = [".txt", ".md", ".log"]

@@ -1,0 +1,37 @@
+[bmscriptsbox]
+
+[bmscriptsbox.info]
+id = "3f8a2c41-9d5e-4b7a-8c26-1e5d9f0a4b73"
+name = "文件批量改名"
+desc = "批量重命名 | 支持前缀与序号 | 一次整理上百个文件"
+version = "1.0.0"
+
+[bmscriptsbox.runtime]
+language = "python"
+language_version = ">=3.12"
+entry = "main.py"
+terminal = "never"
+
+[[bmscriptsbox.inputs]]
+name = "target_paths"
+type = "list"
+pick = "files"
+exts = [".txt", ".md"]
+label = "要改名的文件"
+
+[[bmscriptsbox.params]]
+name = "prefix"
+type = "str"
+default = ""
+description = "加在文件名前面的前缀"
+
+[[bmscriptsbox.params]]
+name = "start_index"
+type = "int"
+default = 1
+description = "序号起始值"
+
+[bmscriptsbox.triggers.context_menu]
+enabled = true
+targets = ["files"]
+filters = [".txt", ".md"]
